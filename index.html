@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Running Timer App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #2563eb;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        main {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .tab-container {
+            display: none;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-container.active {
+            display: block;
+        }
+
+        h2 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .timer-display {
+            background-color: #f0f2f5;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 2rem;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .individual-timer-display {
+            background-color: #f0f2f5;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 3rem;
+            width: 100%;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-start {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .btn-stop {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-close {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .btn-add {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .runner-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .runner-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .runner-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .runner-item.finished {
+            background-color: #d1fae5;
+            border-color: #6ee7b7;
+        }
+
+        .runner-item.active {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .runner-editing {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .runner-editing input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+
+        .btn-action {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 0.25rem;
+        }
+
+        .btn-edit-small {
+            color: #3b82f6;
+        }
+
+        .btn-save {
+            color: #22c55e;
+        }
+
+        .btn-delete {
+            color: #ef4444;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: bold;
+        }
+
+        nav {
+            background-color: white;
+            border-top: 1px solid #ddd;
+            padding: 0.5rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nav-button {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .nav-button.active {
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>Running Timer App</h1>
+    </header>
+    
+    <!-- Main Content -->
+    <main>
+        <!-- Team Tab -->
+        <div id="team-tab" class="tab-container active">
+            <h2>Team Timer</h2>
+            
+            <div class="timer-controls">
+                <select id="team-distance">
+                    <option value="50m">50m</option>
+                    <option value="100m" selected>100m</option>
+                    <option value="200m">200m</option>
+                    <option value="400m">400m</option>
+                    <option value="1km">1km</option>
+                    <option value="2km">2km</option>
+                    <option value="3km">3km</option>
+                    <option value="5km">5km</option>
+                </select>
+                
+                <div id="team-timer" class="timer-display">00:00.00</div>
+                
+                <button id="team-start" class="btn-start">Start</button>
+                <button id="team-stop" class="btn-stop" style="display: none;">Stop & Save</button>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <h3>Runners</h3>
+                    <button id="edit-runners-btn" class="btn-edit">Edit Runners</button>
+                </div>
+                <div id="team-runners" class="runner-list">
+                    <!-- Runners will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Individual Tab -->
+        <div id="individual-tab" class="tab-container">
+            <h2>Individual Timer</h2>
+            
+            <div style="max-width: 600px; margin: 0 auto;">
+                <select id="individual-distance" style="width: 100%;">
+                    <option value="50m">50m</option>
+                    <option value="100m" selected>100m</option>
+                    <option value="200m">200m</option>
+                    <option value="400m">400m</option>
+                    <option value="1km">1km</option>
+                    <option value="2km">2km</option>
+                    <option value="3km">3km</option>
+                    <option value="5km">5km</option>
+                </select>
+                
+                <div id="individual-timer" class="individual-timer-display">00:00.00</div>
+                
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Individual Runners</h3>
+                        <button id="edit-runners-btn2" class="btn-edit">Edit Runners</button>
+                    </div>
+                    <div id="individual-runners" class="runner-list">
+                        <!-- Runners will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Tab -->
+        <div id="history-tab" class="tab-container">
+            <h2>History</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Runner</th>
+                        <th>Distance</th>
+                        <th>Time</th>
+                        <th>Pace</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table">
+                    <!-- History entries will be added here dynamically -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Manage Runners Tab -->
+        <div id="manage-runners-tab" class="tab-container">
+            <div class="section-header">
+                <h2>Manage Runners</h2>
+                <button id="close-manage-btn" class="btn-close">Close</button>
+            </div>
+            
+            <div class="section">
+                <h3>Add New Runner</h3>
+                <div class="input-group">
+                    <input type="text" id="new-runner-input" placeholder="Enter runner name">
+                    <button id="add-runner-btn" class="btn-add">Add Runner</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Current Runners</h3>
+                <div id="manage-runners" class="runner-list">
+                    <!-- Runners will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-buttons">
+            <button id="team-nav" class="nav-button active">
+                <div class="icon">👥</div>
+                <span>Team</span>
+            </button>
+            
+            <button id="individual-nav" class="nav-button">
+                <div class="icon">👤</div>
+                <span>Individual</span>
+            </button>
+            
+            <button id="history-nav" class="nav-button">
+                <div class="icon">📊</div>
+                <span>History</span>
+            </button>
+            
+            <button id="settings-nav" class="nav-button">
+                <div class="icon">⚙️</div>
+                <span>Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // App State
+        const state = {
+            activeTab: 'team',
+            isRunning: false,
+            startTime: null,
+            elapsedTime: 0,
+            selectedDistance: '100m',
+            activeIndividualRunner: null,
+            editingRunnerId: null,
+            runners: [
+                { id: 1, name: 'Alex Johnson', finished: false, finishTime: null },
+                { id: 2, name: 'Sam Williams', finished: false, finishTime: null },
+                { id: 3, name: 'Jamie Smith', finished: false, finishTime: null },
+                { id: 4, name: 'Taylor Brown', finished: false, finishTime: null },
+                { id: 5, name: 'Morgan Davis', finished: false, finishTime: null }
+            ],
+            history: [
+                { id: 1, date: '2025-04-01', distance: '100m', runner: 'Alex Johnson', time: 12560 },
+                { id: 2, date: '2025-04-01', distance: '100m', runner: 'Sam Williams', time: 13050 },
+                { id: 3, date: '2025-03-28', distance: '200m', runner: 'Alex Johnson', time: 28900 },
+                { id: 4, date: '2025-03-28', distance: '400m', runner: 'Sam Williams', time: 73300 }
+            ],
+            timerInterval: null,
+            nextHistoryId: 5,
+            nextRunnerId: 6
+        };
+
+        // DOM Elements
+        const teamTab = document.getElementById('team-tab');
+        const individualTab = document.getElementById('individual-tab');
+        const historyTab = document.getElementById('history-tab');
+        const manageRunnersTab = document.getElementById('manage-runners-tab');
+        
+        const teamNav = document.getElementById('team-nav');
+        const individualNav = document.getElementById('individual-nav');
+        const historyNav = document.getElementById('history-nav');
+        const settingsNav = document.getElementById('settings-nav');
+        
+        const teamDistance = document.getElementById('team-distance');
+        const individualDistance = document.getElementById('individual-distance');
+        
+        const teamTimer = document.getElementById('team-timer');
+        const individualTimer = document.getElementById('individual-timer');
+        
+        const teamStart = document.getElementById('team-start');
+        const teamStop = document.getElementById('team-stop');
+        
+        const teamRunners = document.getElementById('team-runners');
+        const individualRunners = document.getElementById('individual-runners');
+        const manageRunners = document.getElementById('manage-runners');
+        
+        const historyTable = document.getElementById('history-table');
+        
+        const editRunnersBtn = document.getElementById('edit-runners-btn');
+        const editRunnersBtn2 = document.getElementById('edit-runners-btn2');
+        const closeManageBtn = document.getElementById('close-manage-btn');
+        
+        const newRunnerInput = document.getElementById('new-runner-input');
+        const addRunnerBtn = document.getElementById('add-runner-btn');
+        
+        // Helper Functions
+        function formatTime(timeMs) {
+            if (!timeMs) return '00:00.00';
+            
+            const minutes = Math.floor(timeMs / 60000);
+            const seconds = Math.floor((timeMs % 60000) / 1000);
+            const ms = Math.floor((timeMs % 1000) / 10);
+            
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+        }
+        
+        function calculatePace(timeMs, distance) {
+            // Extract numeric part of distance
+            let distanceValue = parseFloat(distance.replace(/[^0-9.]/g, ''));
+            let distanceUnit = distance.replace(/[0-9.]/g, '');
+            
+            // Convert to kilometers
+            let distanceInKm;
+            if (distanceUnit === 'm') {
+                distanceInKm = distanceValue / 1000;
+            } else if (distanceUnit === 'km') {
+                distanceInKm = distanceValue;
+            } else {
+                return 'N/A';
+            }
+            
+            // Avoid division by zero
+            if (distanceInKm < 0.01) return 'N/A';
+            
+            // Calculate pace
+            const paceMs = timeMs / distanceInKm;
+            const paceMinutes = Math.floor(paceMs / 60000);
+            const paceSeconds = Math.floor((paceMs % 60000) / 1000);
+            
+            return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}/km`;
+        }
+        
+        // UI Functions
+        function setActiveTab(tab) {
+            // Hide all tabs
+            teamTab.classList.remove('active');
+            individualTab.classList.remove('active');
+            historyTab.classList.remove('active');
+            manageRunnersTab.classList.remove('active');
+            
+            // Reset nav button active states
+            teamNav.classList.remove('active');
+            individualNav.classList.remove('active');
+            historyNav.classList.remove('active');
+            settingsNav.classList.remove('active');
+            
+            // Set active tab
+            state.activeTab = tab;
+            
+            // Show active tab and highlight nav button
+            if (tab === 'team') {
+                teamTab.classList.add('active');
+                teamNav.classList.add('active');
+            } else if (tab === 'individual') {
+                individualTab.classList.add('active');
+                individualNav.classList.add('active');
+            } else if (tab === 'history') {
+                historyTab.classList.add('active');
+                historyNav.classList.add('active');
+            } else if (tab === 'manage-runners') {
+                manageRunnersTab.classList.add('active');
+            } else if (tab === 'settings') {
+                settingsNav.classList.add('active');
+            }
+            
+            renderAll();
+        }
+        
+        function updateTimerDisplays() {
+            teamTimer.textContent = formatTime(state.elapsedTime);
+            individualTimer.textContent = formatTime(state.elapsedTime);
+        }
+        
+        // Timer Functions
+        function startTimer() {
+            if (state.isRunning) return;
+            
+            state.startTime = Date.now() - state.elapsedTime;
+            state.isRunning = true;
+            
+            state.timerInterval = setInterval(() => {
+                state.elapsedTime = Date.now() - state.startTime;
+                updateTimerDisplays();
+            }, 10);
+            
+            renderAll();
+        }
+        
+        function stopTimer() {
+            if (!state.isRunning) return;
+            
+            clearInterval(state.timerInterval);
+            state.isRunning = false;
+            
+            renderAll();
+        }
+        
+        function resetTimer() {
+            stopTimer();
+            state.elapsedTime = 0;
+            state.activeIndividualRunner = null;
+            updateTimerDisplays();
+        }
+        
+        // Team Timer Functions
+        function startTeamTimer() {
+            // Reset all runners
+            state.runners = state.runners.map(runner => ({
+                ...runner,
+                finished: false,
+                finishTime: null
+            }));
+            
+            startTimer();
+            
+            // Update button visibility
+            teamStart.style.display = 'none';
+            teamStop.style.display = 'inline-block';
+            
+            renderTeamRunners();
+        }
+        
+        function stopTeamTimer() {
+            stopTimer();
+            
+            // Add results to history
+            const finishedRunners = state.runners.filter(runner => runner.finished);
+            if (finishedRunners.length > 0) {
+                const newHistoryItems = finishedRunners.map(runner => ({
+                    id: state.nextHistoryId++,
+                    date: new Date().toISOString().split('T')[0],
+                    distance: state.selectedDistance,
+                    runner: runner.name,
+                    time: runner.finishTime - state.startTime
+                }));
+                
+                state.history = [...state.history, ...newHistoryItems];
+            }
+            
+            // Update button visibility
+            teamStart.style.display = 'inline-block';
+            teamStop.style.display = 'none';
+            
+            renderHistory();
+        }
+        
+        function handleRunnerFinish(id) {
+            if (!state.isRunning) return;
+            
+            state.runners = state.runners.map(runner => 
+                runner.id === id && !runner.finished
+                    ? { ...runner, finished: true, finishTime: Date.now() }
+                    : runner
+            );
+            
+            renderTeamRunners();
+        }
+        
+        // Individual Timer Functions
+        function handleIndividualRunnerClick(id) {
+            const runner = state.runners.find(r => r.id === id);
+            if (!runner) return;
+            
+            // If editing, don't start/stop timer
+            if (state.editingRunnerId !== null) return;
+            
+            // If already timing this runner, stop the timer
+            if (state.isRunning && state.activeIndividualRunner === id) {
+                stopTimer();
+                
+                // Add to history
+                state.history.push({
+                    id: state.nextHistoryId++,
+                    date: new Date().toISOString().split('T')[0],
+                    distance: state.selectedDistance,
+                    runner: runner.name,
+                    time: state.elapsedTime
+                });
+                
+                state.activeIndividualRunner = null;
+            } 
+            // If timing another runner, stop and save that one first
+            else if (state.isRunning && state.activeIndividualRunner !== null && state.activeIndividualRunner !== id) {
+                const currentRunner = state.runners.find(r => r.id === state.activeIndividualRunner);
+                
+                // Save current runner's time
+                if (currentRunner) {
+                    state.history.push({
+                        id: state.nextHistoryId++,
+                        date: new Date().toISOString().split('T')[0],
+                        distance: state.selectedDistance,
+                        runner: currentRunner.name,
+                        time: state.elapsedTime
+                    });
+                }
+                
+                // Start timing new runner
+                resetTimer();
+                state.activeIndividualRunner = id;
+                startTimer();
+            }
+            // If not timing anyone, start timing this runner
+            else {
+                resetTimer();
+                state.activeIndividualRunner = id;
+                startTimer();
+            }
+            
+            renderIndividualRunners();
+            renderHistory();
+        }
+        
+        // Runner Management Functions
+        function addRunner() {
+            const name = newRunnerInput.value.trim();
+            if (name === '') return;
+            
+            const newRunner = {
+                id: state.nextRunnerId++,
+                name: name,
+                finished: false,
+                finishTime: null
+            };
+            
+            state.runners.push(newRunner);
+            newRunnerInput.value = '';
+            
+            renderAll();
+        }
+        
+        function deleteRunner(id) {
+            state.runners = state.runners.filter(runner => runner.id !== id);
+            renderAll();
+        }
+        
+        function startEditingRunner(id) {
+            state.editingRunnerId = id;
+            renderManageRunners();
+        }
+        
+        function saveRunnerEdit(id, newName) {
+            if (newName.trim() === '') return;
+            
+            state.runners = state.runners.map(runner => 
+                runner.id === id ? { ...runner, name: newName.trim() } : runner
+            );
+            
+            state.editingRunnerId = null;
+            renderAll();
+        }
+        
+        // Rendering Functions
+        function renderTeamRunners() {
+            teamRunners.innerHTML = '';
+            
+            state.runners.forEach(runner => {
+                const runnerItem = document.createElement('div');
+                runnerItem.classList.add('runner-item');
+                if (runner.finished) {
+                    runnerItem.classList.add('finished');
+                }
+                
+                runnerItem.innerHTML = `
+                    <span>${runner.name}</span>
+                    ${runner.finished 
+                        ? `<span style="font-family: monospace;">${formatTime(runner.finishTime - state.startTime)}</span>` 
+                        : `<span style="color: #888;">${state.isRunning ? 'Tap when finished' : 'Waiting'}</span>`}
+                `;
+                
+                runnerItem.addEventListener('click', () => handleRunnerFinish(runner.id));
+                
+                teamRunners.appendChild(runnerItem);
+            });
+        }
+        
+        function renderIndividualRunners() {
+            individualRunners.innerHTML = '';
+            
+            state.runners.forEach(runner => {
+                const runnerItem = document.createElement('div');
+                runnerItem.classList.add('runner-item');
+                
+                if (state.isRunning && state.activeIndividualRunner === runner.id) {
+                    runnerItem.classList.add('active');
+                }
+                
+                runnerItem.innerHTML = `
+                    <span>${runner.name}</span>
+                    <span style="font-family: monospace;">
+                        ${state.isRunning && state.activeIndividualRunner === runner.id 
+                            ? 'RUNNING' 
+                            : 'Click to Start/Stop'}
+                    </span>
+                `;
+                
+                runnerItem.addEventListener('click', () => handleIndividualRunnerClick(runner.id));
+                
+                individualRunners.appendChild(runnerItem);
+            });
+        }
+        
+        function renderManageRunners() {
+            manageRunners.innerHTML = '';
+            
+            state.runners.forEach(runner => {
+                const runnerItem = document.createElement('div');
+                runnerItem.classList.add('runner-item');
+                
+                if (state.editingRunnerId === runner.id) {
+                    runnerItem.innerHTML = `
+                        <div class="runner-editing">
+                            <input type="text" value="${runner.name}" class="edit-name-input">
+                            <div>
+                                <button class="btn-action btn-save">Save</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const input = runnerItem.querySelector('.edit-name-input');
+                    const saveButton = runnerItem.querySelector('.btn-save');
+                    
+                    input.focus();
+                    
+                    input.addEventListener('keyup', (e) => {
+                        if (e.key === 'Enter') {
+                            saveRunnerEdit(runner.id, input.value);
+                        }
+                    });
+                    
+                    saveButton.addEventListener('click', () => {
+                        saveRunnerEdit(runner.id, input.value);
+                    });
+                } else {
+                    runnerItem.innerHTML = `
+                        <span>${runner.name}</span>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-edit-small">Edit</button>
+                            <button class="btn-action btn-delete">Delete</button>
+                        </div>
+                    `;
+                    
+                    const editButton = runnerItem.querySelector('.btn-edit-small');
+                    const deleteButton = runnerItem.querySelector('.btn-delete');
+                    
+                    editButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        startEditingRunner(runner.id);
+                    });
+                    
+                    deleteButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteRunner(runner.id);
+                    });
+                }
+                
+                manageRunners.appendChild(runnerItem);
+            });
+        }
+        
+        function renderHistory() {
+            historyTable.innerHTML = '';
+            
+            // Sort by date (newest first)
+            const sortedHistory = [...state.history].sort((a, b) => {
+                return new Date(b.date) - new Date(a.date);
+            });
+            
+            sortedHistory.forEach(entry => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.runner}</td>
+                    <td>${entry.distance}</td>
+                    <td style="font-family: monospace;">${formatTime(entry.time)}</td>
+                    <td style="font-family: monospace;">${calculatePace(entry.time, entry.distance)}</td>
+                `;
+                
+                historyTable.appendChild(row);
+            });
+        }
+        
+        function renderAll() {
+            // Update selects
+            teamDistance.value = state.selectedDistance;
+            individualDistance.value = state.selectedDistance;
+            
+            // Update timer displays
+            updateTimerDisplays();
+            
+            // Update button visibility
+            teamStart.style.display = state.isRunning ? 'none' : 'inline-block';
+            teamStop.style.display = state.isRunning ? 'inline-block' : 'none';
+            
+            // Show/hide edit runners buttons
+            editRunnersBtn.style.display = state.isRunning ? 'none' : 'inline-block';
+            editRunnersBtn2.style.display = state.isRunning ? 'none' : 'inline-block';
+            
+            // Render all sections
+            renderTeamRunners();
+            renderIndividualRunners();
+            renderManageRunners();
+            renderHistory();
+        }
+        
+        // Event Listeners
+        // Navigation
+        teamNav.addEventListener('click', () => setActiveTab('team'));
+        individualNav.addEventListener('click', () => setActiveTab('individual'));
+        historyNav.addEventListener('click', () => setActiveTab('history'));
+        settingsNav.addEventListener('click', () => alert('Settings not implemented in this demo'));
+        
+        // Distance selects
+        teamDistance.addEventListener('change', () => {
+            state.selectedDistance = teamDistance.value;
+            individualDistance.value = teamDistance.value;
+        });
+        
+        individualDistance.addEventListener('change', () => {
+            state.selectedDistance = individualDistance.value;
+            teamDistance.value = individualDistance.value;
+        });
+        
+        // Team timer controls
+        teamStart.addEventListener('click', startTeamTimer);
+        teamStop.addEventListener('click', stopTeamTimer);
+        
+        // Runner management
+        editRunnersBtn.addEventListener('click', () => setActiveTab('manage-runners'));
+        editRunnersBtn2.addEventListener('click', () => setActiveTab('manage-runners'));
+        closeManageBtn.addEventListener('click', () => {
+            // Return to the previous tab
+            if (state.activeTab === 'manage-runners') {
+                setActiveTab('team');
+            }
+        });
+        
+        // Add runner form
+        newRunnerInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                addRunner();
+            }
+        });
+        
+        addRunnerBtn.addEventListener('click', addRunner);
+        
+        // Initialize the app
+        renderAll();
+    </script>
+</body>
+</html>
